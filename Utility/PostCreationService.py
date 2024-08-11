@@ -33,6 +33,7 @@ class PostCreationService(object):
             messages=[{"role": "user", "content": "Give me a short quote enough for an Instagram post"}],
         ).to_dict()
         text = completion["choices"][0]["message"]["content"]
+        print(text)
         return text
     
     def generateImage(self):
