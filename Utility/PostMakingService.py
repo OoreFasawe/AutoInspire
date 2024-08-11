@@ -1,15 +1,10 @@
 from ..Classes import Post
-class PostMakingService:
-    def __init__(self):
-        self.postMakingService = None
-        pass
-
-    def getPostMakingService(self):
-        # Singleton design
-        if not self.postMakingService:
-            self.postMakingService = PostMakingService()
-        
-        return self.postMakingService
+class PostMakingService(object):
+    def __new__(cls):
+        # singleton design pattern in python
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(PostMakingService, cls).__new__(cls)
+        return cls.instance
 
     def createPost(self):
         pass

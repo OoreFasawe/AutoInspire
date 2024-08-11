@@ -1,15 +1,10 @@
 from ..Classes import Post
 class PostPublishingService:
-    def __init__(self):
-        self.postPublishingService = None
-        pass
-
-    def getPostPublishingService(self):
-        # Singleton design
-        if not self.postPublishingService:
-            self.postPublishingService = PostPublishingService()
-        
-        return self.postPublishingService
+    # singleton design pattern in python
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(PostPublishingService, cls).__new__(cls)
+        return cls.instance
 
     def publishPost(self):
         pass
