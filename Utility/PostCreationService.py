@@ -17,8 +17,8 @@ class PostCreationService(object):
         previousPosts = self.retrievePreviousPosts()
         client = OpenAI(api_key=Application.keys["api_secret_key"])
         newPost = Post()
-        newPost.text = self.generateText(client)
-        newPost.imageUrl = self.generateImage(client, newPost.text)
+        newPost.text = self.generateText()
+        newPost.imageUrl = self.generateImage(newPost.text)
         return newPost
 
     def savePost(self, post: Post):
