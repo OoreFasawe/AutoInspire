@@ -1,13 +1,14 @@
+from openai import OpenAI 
 from ..Classes import Post
-class PostMakingService(object):
+class PostCreationService(object):
     def __new__(cls):
         # singleton design pattern in python
         if not hasattr(cls, 'instance'):
-            cls.instance = super(PostMakingService, cls).__new__(cls)
+            cls.instance = super(PostCreationService, cls).__new__(cls)
         return cls.instance
 
     def createPost(self):
-        pass
+        client = OpenAI()
 
     def savePost(self, post: Post):
         pass
