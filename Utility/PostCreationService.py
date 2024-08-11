@@ -52,4 +52,6 @@ class PostCreationService(object):
         ).to_dict()
         imageUrl = imageCompletion["data"][0]["url"]
         return imageUrl
-creationService = PostCreationService()
+    
+p = PostCreationService()
+p.createPost()
