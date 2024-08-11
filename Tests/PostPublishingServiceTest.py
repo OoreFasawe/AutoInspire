@@ -1,9 +1,8 @@
-#TODO(oore)- Streamline imports in a better way
 import sys
 import os
-sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot/Utility'))
-from SharedTests import SharedTests
-from PostPublishingService import PostPublishingService
+sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
+from Tests.SharedTests import SharedTests
+from Utility.PostPublishingService import PostPublishingService
 class PostPublishingServiceTest:
     def runTests(self):
         self.testForPostMakingServiceSingletonBehaviour()
