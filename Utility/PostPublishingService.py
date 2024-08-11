@@ -6,5 +6,5 @@ class PostPublishingService:
             cls.instance = super(PostPublishingService, cls).__new__(cls)
         return cls.instance
 
-    def publishPost(self):
+    def publishPost(self, post:Post):
         pass
