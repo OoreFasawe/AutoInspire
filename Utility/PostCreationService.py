@@ -4,7 +4,6 @@ sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram
 from openai import OpenAI 
 from Classes.Post import Post
 from Details import Application
-import requests
 class PostCreationService(object):
     client = OpenAI(api_key=Application.keys["api_secret_key"])
     def __new__(cls):
