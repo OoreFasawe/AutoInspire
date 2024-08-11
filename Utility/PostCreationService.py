@@ -4,6 +4,8 @@ sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram
 from openai import OpenAI 
 from Classes.Post import Post
 from Details import Application
+import firebase_admin
+from firebase_admin import firestore, credentials
 class PostCreationService(object):
     client = OpenAI(api_key=Application.keys["api_secret_key"])
     def __new__(cls):
@@ -20,7 +22,13 @@ class PostCreationService(object):
         return newPost
 
     def savePost(self, post: Post):
-        pass
+        # Use a service account.
+        cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot/firebaseServiceAccount.json'))
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+        postsCollection = db.collection("posts")
+        postsCollection.add({"text": post.text, "imageUrl": post.imageUrl})
+        return
 
     def retrievePreviousPosts(self):
         pass
@@ -44,3 +52,4 @@ class PostCreationService(object):
         ).to_dict()
         imageUrl = imageCompletion["data"][0]["url"]
         return imageUrl
+creationService = PostCreationService()
