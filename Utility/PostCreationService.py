@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
 from openai import OpenAI 
 from Classes.Post import Post
+from Classes.Post import Post
 from Details import Application
 import firebase_admin
 from firebase_admin import firestore, credentials
