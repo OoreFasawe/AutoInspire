@@ -22,7 +22,7 @@ class PostCreationService(object):
     def savePost(self, post: Post):
         pass
 
-    def retrievePreviousPosts():
+    def retrievePreviousPosts(self):
         pass
 
     def generateText(self):
@@ -37,3 +37,6 @@ class PostCreationService(object):
     
     def generateImage(self):
         pass
+
+p = PostCreationService()
+p.createPost()
