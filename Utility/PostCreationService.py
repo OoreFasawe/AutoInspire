@@ -37,7 +37,7 @@ class PostCreationService(object):
         return text
     
     def generateImage(self, text):
-        #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate
+        #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
         imgPrompt = f'Make a picture background with exactly the words "{text}" written on it clearly.'
         imageCompletion = PostCreationService.client.images.generate(
             model="dall-e-3",
