@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
 from Tests.SharedTests import SharedTests
-from PostCreationService import PostCreationService
+from Utility.PostCreationService import PostCreationService
 class PostCreationServiceTest:
     def runTests(self):
         self.testForPostCreationServiceSingletonBehaviour()
@@ -11,8 +11,9 @@ class PostCreationServiceTest:
         SharedTests.testSingletonBehaviour(PostCreationService)
 
         
-postCreationServiceTest = PostCreationServiceTest()
-postCreationServiceTest.runTests()
+if __name__ == "__main__":
+    postCreationServiceTest = PostCreationServiceTest()
+    postCreationServiceTest.runTests()
 
         
     

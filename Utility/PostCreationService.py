@@ -72,6 +72,7 @@ class PostCreationService(object):
         return imageUrl
 
 # demo functionality
-p = PostCreationService()
-newPost = p.createPost()
-p.savePost(newPost)
+if __name__ == "__main__":
+    p = PostCreationService()
+    newPost = p.createPost()
+    p.savePost(newPost)
