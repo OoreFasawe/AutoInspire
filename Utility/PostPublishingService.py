@@ -18,6 +18,6 @@ class PostPublishingService:
 
     def publishPost(self, post:Post):
         #Calling upload here
-        self.bot.upload_photo('Path to image here', caption='Your caption goes here')
+        self.bot.upload_photo(post.imageUrl, caption= post.text)
         
         return
