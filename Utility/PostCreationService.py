@@ -1,13 +1,20 @@
 import sys
 import os
-sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
+ABS_PATH = '/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'
+sys.path.append(os.path.abspath(ABS_PATH))
 from openai import OpenAI 
 from Classes.Post import Post
 from Details import Application
 import firebase_admin
-from firebase_admin import firestore, credentials
+from firebase_admin import firestore, credentials, storage
+import requests
 class PostCreationService(object):
     client = OpenAI(api_key=Application.keys["api_secret_key"])
+    cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot/firebaseServiceAccount.json'))
+    firebase_admin.initialize_app(cred, {"storageBucket": "instagram-autobot-df35b.appspot.com"})
+    db = firestore.client()
+    bucket = storage.bucket()
+    
     def __new__(cls):
         # Singleton design pattern in python.
         if not hasattr(cls, 'instance'):
@@ -16,20 +23,29 @@ class PostCreationService(object):
 
     def createPost(self):
         previousPosts = self.retrievePreviousPosts()
-        client = OpenAI(api_key=Application.keys["api_secret_key"])
         newPost = Post()
         newPost.text = self.generateText()
         newPost.imageUrl = self.generateImage(newPost.text)
+        # TODO(oore): Add count variable to database for faster lookup
+        # save file name
+        postCollection = PostCreationService.db.collection("posts")
+        countQuery = postCollection.count()
+        numberOfPosts = countQuery.get()[0][0].value
+        fileName = f"Post#{int(numberOfPosts + 1)}"
+        newPost.fileName = fileName
         return newPost
 
     def savePost(self, post: Post):
-        # Use a service account.
-        cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot/firebaseServiceAccount.json'))
-        firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        postsCollection = db.collection("posts")
-        countQuery = postsCollection.count().get()
-        postsCollection.add(document_id=f"Post#{int(countQuery[0][0].value + 1)}", document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
+        # save to firebase storage
+        blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
+        imageData = requests.get(post.imageUrl).content
+        blob.upload_from_string(
+            imageData,
+            content_type='image/jpg'
+        )
+        # change temporary url to firebase permanent url and store in database
+        post.imageUrl = blob.public_url
+        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
         return
 
     def retrievePreviousPosts(self):
