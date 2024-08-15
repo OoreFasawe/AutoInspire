@@ -29,7 +29,7 @@ class PostCreationService(object):
         db = firestore.client()
         postsCollection = db.collection("posts")
         countQuery = postsCollection.count().get()
-        postsCollection.add(document_id=f"Post{countQuery[0][0].value}", document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
+        postsCollection.add(document_id=f"Post#{int(countQuery[0][0].value + 1)}", document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
         return
 
     def retrievePreviousPosts(self):
