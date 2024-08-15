@@ -26,13 +26,7 @@ class PostCreationService(object):
         newPost = Post()
         newPost.text = self.generateText()
         newPost.imageUrl = self.generateImage(newPost.text)
-        # TODO(oore): Add count variable to database for faster lookup
-        # save file name
-        postCollection = PostCreationService.db.collection("posts")
-        countQuery = postCollection.count()
-        numberOfPosts = countQuery.get()[0][0].value
-        fileName = f"Post#{int(numberOfPosts + 1)}"
-        newPost.fileName = fileName
+        newPost.fileName = self.createFileName()
         return newPost
 
     def savePost(self, post: Post):
@@ -45,6 +39,7 @@ class PostCreationService(object):
         )
         # change temporary url to firebase permanent url and store in database
         post.imageUrl = blob.public_url
+        blob.make_public()
         PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
         return
 
@@ -70,6 +65,14 @@ class PostCreationService(object):
         ).to_dict()
         imageUrl = imageCompletion["data"][0]["url"]
         return imageUrl
+    
+    def createFileName(self):
+        postCollection = PostCreationService.db.collection("posts")
+        # TODO(oore): Add count variable to database for faster lookup
+        countQuery = postCollection.count()
+        numberOfPosts = countQuery.get()[0][0].value
+        fileName = f"Post#{int(numberOfPosts + 1)}"
+        return fileName
 
 # demo functionality
 if __name__ == "__main__":
