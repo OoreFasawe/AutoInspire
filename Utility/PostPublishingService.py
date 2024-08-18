@@ -7,6 +7,7 @@ from instabot.bot import Bot
 class PostPublishingService:
     bot =  Bot()
     bot.login(username='butterman_32', password='ooreAutobot')
+
     # singleton design pattern in python
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -16,13 +17,13 @@ class PostPublishingService:
 
     def publishPost(self, post:Post):
         #Calling upload here
-        self.bot.upload_photo(post.imageUrl, caption= post.text)
+        isPostPublished = PostPublishingService.bot.upload_photo(post.image, caption= post.text)
         
-        return
+        return isPostPublished
 
 # demo functionality
 if __name__ == "__main__":
     p = PostPublishingService()
-    newPost = Post()
-    newPost = p.publishPost()
-    p.savePost(newPost)
+    newPost = Post("Post#10.jpg", "Test 1, 2, 3...")
+    postPublished = p.publishPost(newPost)
+    print(postPublished)
