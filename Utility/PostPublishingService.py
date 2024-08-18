@@ -3,10 +3,12 @@ import os
 sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
 from Classes.Post import Post
 from instabot.bot import Bot
+from Details import Application
+
 
 class PostPublishingService:
     bot =  Bot()
-    bot.login(username='butterman_32', password='ooreAutobot')
+    bot.login(username=Application.loginInfo["instagram_username"], password=Application.loginInfo["instagram_password"])
 
     # singleton design pattern in python
     def __new__(cls):
