@@ -1,8 +1,8 @@
 import sys
 import os
 sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
-from Classes import Post
-from instabot import Bot
+from Classes.Post import Post
+from instabot.bot import Bot
 
 class PostPublishingService:
     bot =  Bot()
@@ -23,5 +23,6 @@ class PostPublishingService:
 # demo functionality
 if __name__ == "__main__":
     p = PostPublishingService()
-    newPost = p.createPost()
+    newPost = Post()
+    newPost = p.publishPost()
     p.savePost(newPost)
