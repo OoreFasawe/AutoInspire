@@ -2,10 +2,8 @@ import sys
 import os
 sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
 from Classes.Post import Post
-# from instabot.bot import Bot
 from Details import Application
 import requests
-import time
 
 base_ig_url = "https://graph.instagram.com"
 base_fb_url = "https://graph.facebook.com"
@@ -29,15 +27,20 @@ class PostPublishingService:
         return mediaId
     
     def getUserDetails(self):
+        print("Getting user details...")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["fields"] = ["user_id,username,account_type,name"]
         response = requests.get(base_ig_url + f"/me", params)
         userData = response.json()
         params["fields"] = None
+        print(f"Username: {userData['username']}. User id: {userData['user_id']}\n")
 
         return userData
     
     def createMediaContainer(self, userId, post:Post):
+        print(f"Creating media container...")
+        print(f"Post image url: {post.image}")
+        print(f"Post caption: {post.text}")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["image_url"] = post.image
         params["caption"] = post.text
@@ -45,15 +48,18 @@ class PostPublishingService:
         containerId = response.json()["id"]
         params["image_url"] = None
         params["caption"] = None
-
+        print(f"Post created, container id: {containerId}\n")
+        
         return containerId
 
     def publishMediaContainer(self, userId, containerId):
+        print(f"Publishing post...")
         params["access_token"] = Application.keys["facebook_page_user_access_token"]
         params["creation_id"] = containerId
         response = requests.post(base_fb_url + f"/{userId}/media_publish", params)
         mediaId = response.json()["id"]
         params["creation_id"] = None
+        print(f"Post published, media id: {mediaId}\n")
 
         return mediaId
     
