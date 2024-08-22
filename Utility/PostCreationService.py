@@ -31,6 +31,7 @@ class PostCreationService(object):
 
     def savePost(self, post: Post):
         # save to firebase storage
+        print(f"Saving {post.fileName} to database...")
         blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
         imageData = requests.get(post.imageUrl).content
         blob.upload_from_string(
@@ -41,6 +42,7 @@ class PostCreationService(object):
         post.imageUrl = blob.public_url
         blob.make_public()
         PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
+        print(f"Saved {post.fileName} to database. Public url: {post.imageUrl}\n")
         return
 
     def retrievePreviousPosts(self):
@@ -48,14 +50,17 @@ class PostCreationService(object):
 
     def generateText(self):
         #TODO(oore): Add better prompt engineering to generate quotes.
+        print("Generating caption...")
         textCompletion = PostCreationService.client.chat.completions.create(
             model="gpt-3.5-turbo", 
-            messages=[{"role": "user", "content": "Give me a short quote enough for an Instagram post."}],
+            messages=[{"role": "user", "content": "Give me a short quote enough for an Instagram post; no hashtags, just a text."}],
         ).to_dict()
         text = textCompletion["choices"][0]["message"]["content"]
+        print(f"Caption: {text}\n")
         return text
     
     def generateImage(self, text):
+        print("Generating image...")
         #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
         imgPrompt = f'Make a picture background with exactly the words "{text}" written on it clearly.'
         imageCompletion = PostCreationService.client.images.generate(
@@ -64,14 +69,17 @@ class PostCreationService(object):
             size="1024x1024",
         ).to_dict()
         imageUrl = imageCompletion["data"][0]["url"]
+        print(f"Image url: {imageUrl}\n")
         return imageUrl
     
     def createFileName(self):
+        print("Creating post file name...")
         postCollection = PostCreationService.db.collection("posts")
         # TODO(oore): Add count variable to database for faster lookup
         countQuery = postCollection.count()
         numberOfPosts = countQuery.get()[0][0].value
         fileName = f"Post#{int(numberOfPosts + 1)}"
+        print(f"File name: {fileName}\n")
         return fileName
 
 # demo functionality
