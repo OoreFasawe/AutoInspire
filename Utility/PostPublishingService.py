@@ -63,7 +63,22 @@ class PostPublishingService:
 
         return mediaId
     
+    def getLongLivedAccessToken(self, accessToken):
+        url = base_fb_url + '/oauth/access_token'
+        param = dict()
+        param['grant_type'] = 'fb_exchange_token'
+        param['client_id'] = Application.loginInfo["developer_app_id"]
+        param['client_secret'] = Application.keys["developer_app_secret_key"]
+        param['fb_exchange_token'] = accessToken
+        response = requests.get(url = url,params=param)
+        long_lived_access_tokken =response.json()["access_token"]
+
+        return long_lived_access_tokken
+    
 # demo functionality
 if __name__ == "__main__":
     p = PostPublishingService()
+    if not Application.keys["facebook_page_user_access_token"]:
+        shortLivedAccessToken = Application.keys["facebook_page_user_short_lived_access_token"]
+        p.getLongLivedAccessToken(shortLivedAccessToken)
     p.publishPost(Post("https://storage.googleapis.com/instagram-autobot-df35b.appspot.com/Post%2310.jpg", "Test"))
