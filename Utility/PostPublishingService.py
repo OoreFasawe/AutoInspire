@@ -6,8 +6,8 @@ from Classes.Post import Post
 from Details import Application
 import requests
 
-base_url = "https://graph.facebook.com"
-params = {"access_token": Application.keys["instagram_access_token"]}
+base_url = "https://graph.instagram.com"
+params = {"access_token": {Application.keys["instagram_app_user_access_token"]}}
 class PostPublishingService:
     # bot =  Bot()
     # bot.login(username=Application.loginInfo["instagram_username"], 
@@ -21,17 +21,24 @@ class PostPublishingService:
         return cls.instance 
 
     def publishPost(self, post:Post):
-        #Calling upload here
-        isPostPublished = PostPublishingService.bot.upload_photo(post.image, caption= post.text)
         
-        return isPostPublished
+        return 
     
-    def authenticateUser(self):
-        response = requests.get(base_url + "/me/accounts", params)
-        print(response.json())
-        return
+    def getUserDetails(self):
+        params["fields"] = ["user_id,username,account_type,name"]
+        response = requests.get(base_url + f"/me", params)
+        userData = response.json()
+        params["fields"] = None
+        print(userData)
+        return userData
+    
+    def createMediaContainer(self, userId):
+        params["image_url"] = "https://storage.googleapis.com/instagram-autobot-df35b.appspot.com/Post%2310.jpg"
+        response = requests.get(base_url + f"/{userId}/media", params)
+        containerId = response.json()
+        print(containerId)
+        return containerId
 
 # demo functionality
 if __name__ == "__main__":
     p = PostPublishingService()
-    p.authenticateUser()
