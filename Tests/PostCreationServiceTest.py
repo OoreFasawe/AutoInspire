@@ -11,8 +11,9 @@ class PostCreationServiceTest:
         SharedTests.testSingletonBehaviour(PostCreationService)
 
         
-postCreationServiceTest = PostCreationServiceTest()
-postCreationServiceTest.runTests()
+if __name__ == "__main__":
+    postCreationServiceTest = PostCreationServiceTest()
+    postCreationServiceTest.runTests()
 
         
     

@@ -10,8 +10,7 @@ base_fb_url = "https://graph.facebook.com"
 params = {}
 userData = {}
 class PostPublishingService:
-
-    # singleton design pattern in python
+    # Singleton design pattern in python.
     def __new__(cls):
         if not hasattr(cls, 'instance'):
             cls.instance = super(PostPublishingService, cls).__new__(cls)
