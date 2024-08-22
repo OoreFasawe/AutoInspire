@@ -5,8 +5,8 @@ from Classes.Post import Post
 from Details import Application
 import requests
 
-base_ig_url = "https://graph.instagram.com"
-base_fb_url = "https://graph.facebook.com"
+base_ig_url = "https://graph.instagram.com/"
+base_fb_url = "https://graph.facebook.com/"
 params = {}
 userData = {}
 class PostPublishingService:
@@ -18,10 +18,10 @@ class PostPublishingService:
         return cls.instance 
 
     def publishPost(self, post:Post):
-        userData = p.getUserDetails()
+        userData = self.getUserDetails()
         userId = userData["user_id"]
         containerId = self.createMediaContainer(userId, post)
-        mediaId = p.publishMediaContainer(userId, containerId)
+        mediaId = self.publishMediaContainer(userId, containerId)
 
         return mediaId
     
@@ -29,7 +29,7 @@ class PostPublishingService:
         print("Getting user details...")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["fields"] = ["user_id,username,account_type,name"]
-        response = requests.get(base_ig_url + f"/me", params)
+        response = requests.get(base_ig_url + f"me", params)
         userData = response.json()
         params["fields"] = None
         print(f"Username: {userData['username']}. User id: {userData['user_id']}\n")
@@ -43,7 +43,7 @@ class PostPublishingService:
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["image_url"] = post.imageUrl
         params["caption"] = post.text
-        response = requests.post(base_ig_url + f"/{userId}/media", params)
+        response = requests.post(base_ig_url + f"{userId}/media", params)
         containerId = response.json()["id"]
         params["image_url"] = None
         params["caption"] = None
@@ -55,7 +55,7 @@ class PostPublishingService:
         print(f"Publishing post...")
         params["access_token"] = Application.keys["facebook_page_user_access_token"]
         params["creation_id"] = containerId
-        response = requests.post(base_fb_url + f"/{userId}/media_publish", params)
+        response = requests.post(base_fb_url + f"{userId}/media_publish", params)
         mediaId = response.json()["id"]
         params["creation_id"] = None
         print(f"Post published, media id: {mediaId}\n")
@@ -63,7 +63,7 @@ class PostPublishingService:
         return mediaId
     
     def getLongLivedAccessToken(self, accessToken):
-        url = base_fb_url + '/oauth/access_token'
+        url = base_fb_url + 'oauth/access_token'
         param = dict()
         param['grant_type'] = 'fb_exchange_token'
         param['client_id'] = Application.loginInfo["developer_app_id"]
