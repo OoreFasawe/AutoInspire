@@ -68,11 +68,12 @@ class PostCreationService(object):
     def generateImage(self, text):
         print("Generating image...")
         #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
-        imgPrompt = f'Make a picture background with exactly the words "{text}" written on it clearly.'
+        imgPrompt = f'Make a visual that depicts what is said in this text(no need to add text on the image): "{text}"'
         imageCompletion = PostCreationService.client.images.generate(
             model="dall-e-3",
             prompt=imgPrompt,
             size="1024x1024",
+            style="vivid",
         ).to_dict()
         imageUrl = imageCompletion["data"][0]["url"]
         print(f"Image url: {imageUrl}\n")
