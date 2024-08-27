@@ -56,8 +56,14 @@ class PostCreationService(object):
             model="gpt-4o-mini", 
         ).to_dict()
         text = textCompletion["choices"][0]["message"]["content"]
-        print(f"Caption: {text}\n")
-        return text
+        hashtagCompletion = textCompletion = PostCreationService.client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": f"Make five space-seperated relevant hashtags to this text on a single line):{text}."}],
+        ).to_dict()
+        hashtags = hashtagCompletion["choices"][0]["message"]["content"]
+        caption = "Quote of the day:\n" + text + "\n\n" + "#Motivation " + hashtags
+        print(f"Caption: {caption}\n")
+        return caption
     
     def generateImage(self, text):
         print("Generating image...")
