@@ -38,10 +38,10 @@ class PostPublishingService:
     
     def createMediaContainer(self, userId, post:Post):
         print(f"Creating media container...")
-        print(f"Post image url: {post.imageUrl}")
+        print(f"Post media url: {post.mediaUrl}")
         print(f"Post caption:\n{post.text}")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
-        params["image_url"] = post.imageUrl
+        params["image_url"] = post.mediaUrl
         params["caption"] = post.text
         response = requests.post(base_ig_url + f"{userId}/media", params)
         containerId = response.json()["id"]

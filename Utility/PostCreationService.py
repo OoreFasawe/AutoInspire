@@ -25,7 +25,7 @@ class PostCreationService(object):
         previousPosts = self.retrievePreviousPosts()
         newPost = Post()
         newPost.text = self.generateText()
-        newPost.imageUrl = self.generateImage(newPost.text)
+        newPost.mediaUrl = self.generateImage(newPost.text)
         newPost.fileName = self.createFileName()
         return newPost
 
@@ -33,16 +33,16 @@ class PostCreationService(object):
         # save to firebase storage
         print(f"Saving {post.fileName} to database...")
         blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
-        imageData = requests.get(post.imageUrl).content
+        imageData = requests.get(post.mediaUrl).content
         blob.upload_from_string(
             imageData,
             content_type='image/jpg'
         )
         # change temporary url to firebase permanent url and store in database
-        post.imageUrl = blob.public_url
+        post.mediaUrl = blob.public_url
         blob.make_public()
-        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "imageUrl": post.imageUrl})
-        print(f"Saved {post.fileName} to database. Public url: {post.imageUrl}\n")
+        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "mediaUrl": post.mediaUrl})
+        print(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
         return
 
     def retrievePreviousPosts(self):
@@ -75,9 +75,9 @@ class PostCreationService(object):
             size="1024x1024",
             style="vivid",
         ).to_dict()
-        imageUrl = imageCompletion["data"][0]["url"]
-        print(f"Image url: {imageUrl}\n")
-        return imageUrl
+        mediaUrl = imageCompletion["data"][0]["url"]
+        print(f"Image url: {mediaUrl}\n")
+        return mediaUrl
     
     def createFileName(self):
         print("Creating post file name...")
