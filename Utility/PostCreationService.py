@@ -52,8 +52,8 @@ class PostCreationService(object):
         #TODO(oore): Add better prompt engineering to generate quotes.
         print("Generating caption...")
         textCompletion = PostCreationService.client.chat.completions.create(
-            model="gpt-3.5-turbo", 
             messages=[{"role": "user", "content": "Give me a short quote enough for an Instagram post; no hashtags, just a text."}],
+            model="gpt-4o-mini", 
         ).to_dict()
         text = textCompletion["choices"][0]["message"]["content"]
         print(f"Caption: {text}\n")
