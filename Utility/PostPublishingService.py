@@ -39,7 +39,7 @@ class PostPublishingService:
     def createMediaContainer(self, userId, post:Post):
         print(f"Creating media container...")
         print(f"Post image url: {post.imageUrl}")
-        print(f"Post caption: {post.text}")
+        print(f"Post caption:\n{post.text}")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["image_url"] = post.imageUrl
         params["caption"] = post.text
@@ -47,7 +47,7 @@ class PostPublishingService:
         containerId = response.json()["id"]
         params["image_url"] = None
         params["caption"] = None
-        print(f"Post created, container id: {containerId}\n")
+        print(f"Media container created, container id: {containerId}\n")
         
         return containerId
 
@@ -71,7 +71,7 @@ class PostPublishingService:
         param['fb_exchange_token'] = accessToken
         response = requests.get(url = url,params=param)
         long_lived_access_tokken =response.json()["access_token"]
-
+        print(long_lived_access_tokken)
         return long_lived_access_tokken
     
 # demo functionality
