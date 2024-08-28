@@ -22,7 +22,7 @@ class PostCreationService(object):
         return cls.instance
 
     def createPost(self):
-        noRepeatList = self.retrievePreviousPosts()
+        noRepeatList = self.retrieveMostPreviousPosts()
         newPost = Post()
         newPost.caption = self.generateCaption(noRepeatList)
         newPost.hashtags = self.generateHashtags(newPost.caption)
@@ -43,10 +43,23 @@ class PostCreationService(object):
         post.mediaUrl = blob.public_url
         blob.make_public()
         PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "mediaUrl": post.mediaUrl})
+        # update previous post cache 
+        p.updateMostPreviousPosts(post.caption)
         print(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
         return
+    
+    def updateMostPreviousPosts(self, text):
+        path = "../Cache/previousPosts.txt"
+        f = open(path, "r+")
+        _ = f.readline()
+        data = f.read()
+        f.seek(0)
+        f.write(data)
+        f.truncate()
+        f.write(f"{text}\n")
+        return
 
-    def retrievePreviousPosts(self):
+    def retrieveMostPreviousPosts(self):
         path = "../Cache/previousPosts.txt"
         postCacheExists = os.path.isfile(path)
         if not postCacheExists:
@@ -120,4 +133,3 @@ if __name__ == "__main__":
     p = PostCreationService()
     newPost = p.createPost()
     p.savePost(newPost)
-    
