@@ -46,8 +46,27 @@ class PostCreationService(object):
         return
 
     def retrievePreviousPosts(self):
-        pass
+        path = "../Cache/previousPosts.txt"
+        postCacheExists = os.path.isfile(path)
+        if not postCacheExists:
+            try:
+                # create new file
+                open(path, "x")
+                f = open(path, "a")
+                for _ in range(20):
+                    f.write("xx\n")
+                f.close()
+            except Exception as error:
+                print("file exists but for some reason was not found by system", error)
 
+        # read file content
+        f = open(path, "r")
+        previousPosts = []
+        for _ in range(20):
+            line = f.readline().rstrip("xx\n")
+            previousPosts.append(line)
+        return previousPosts
+        
     def generateText(self):
         #TODO(oore): Add better prompt engineering to generate quotes.
         print("Generating caption...")
@@ -94,3 +113,4 @@ if __name__ == "__main__":
     p = PostCreationService()
     newPost = p.createPost()
     p.savePost(newPost)
+    print(p.retrievePreviousPosts())
