@@ -22,10 +22,11 @@ class PostCreationService(object):
         return cls.instance
 
     def createPost(self):
-        previousPosts = self.retrievePreviousPosts()
+        noRepeatList = self.retrievePreviousPosts()
         newPost = Post()
-        newPost.text = self.generateText(previousPosts)
-        newPost.mediaUrl = self.generateImage(newPost.text)
+        newPost.caption = self.generateCaption(noRepeatList)
+        newPost.hashtags = self.generateHashtags(newPost.caption)
+        newPost.mediaUrl = self.generateImage(newPost.caption)
         newPost.fileName = self.createFileName()
         return newPost
 
@@ -68,24 +69,27 @@ class PostCreationService(object):
                 previousPosts.append(line)
         return previousPosts
         
-    def generateText(self, previousPosts):
+    def generateCaption(self, noRepeatList):
         #TODO(oore): Add better prompt engineering to generate quotes.
         print("Generating caption...")
-        previousPostsOnALine = " ".join(previousPosts)
+        noRepeatListOnALine = " ".join(noRepeatList)
         textCompletion = PostCreationService.client.chat.completions.create(
             messages=[{"role": "user", "content": f"Give me a short quote enough for an Instagram post; no hashtags, just a text.\
-                       This quote should be different from these quotes from previous posts:{previousPostsOnALine}"}],
+                       This quote should be different from these quotes from previous posts:{noRepeatListOnALine}"}],
             model="gpt-4o-mini", 
         ).to_dict()
-        text = textCompletion["choices"][0]["message"]["content"]
-        hashtagCompletion = textCompletion = PostCreationService.client.chat.completions.create(
+        caption = textCompletion["choices"][0]["message"]["content"]
+        print(f"Caption: {caption}\n")
+        return caption
+    
+    def generateHashtags(self, text):
+        hashtagCompletion = PostCreationService.client.chat.completions.create(
             model="gpt-4o-mini", 
             messages=[{"role": "user", "content": f"Make five space-seperated relevant hashtags to this text on a single line):{text}."}],
         ).to_dict()
         hashtags = hashtagCompletion["choices"][0]["message"]["content"]
-        caption = "Quote of the day:\n" + text + "\n\n" + "#Motivation " + hashtags
-        print(f"Caption: {caption}\n")
-        return caption
+        print(f"Hashtags: {hashtags}\n")
+        return hashtags
     
     def generateImage(self, text):
         print("Generating image...")

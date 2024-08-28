@@ -14,7 +14,6 @@ class PostPublishingService:
     def __new__(cls):
         if not hasattr(cls, 'instance'):
             cls.instance = super(PostPublishingService, cls).__new__(cls)
-        
         return cls.instance 
 
     def publishPost(self, post:Post):
@@ -22,7 +21,6 @@ class PostPublishingService:
         userId = userData["user_id"]
         containerId = self.createMediaContainer(userId, post)
         mediaId = self.publishMediaContainer(userId, containerId)
-
         return mediaId
     
     def getUserDetails(self):
@@ -33,22 +31,21 @@ class PostPublishingService:
         userData = response.json()
         params["fields"] = None
         print(f"Username: {userData['username']}. User id: {userData['user_id']}\n")
-
         return userData
     
     def createMediaContainer(self, userId, post:Post):
         print(f"Creating media container...")
         print(f"Post media url: {post.mediaUrl}")
-        print(f"Post caption:\n{post.text}")
+        print(f"Post caption:{post.caption}")
+        print(f"Post hashtags:{post.hashtags}")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["image_url"] = post.mediaUrl
-        params["caption"] = post.text
+        params["caption"] = f"Quote of the day: {post.caption}\n\n{post.hashtags}"
         response = requests.post(base_ig_url + f"{userId}/media", params)
         containerId = response.json()["id"]
         params["image_url"] = None
         params["caption"] = None
         print(f"Media container created, container id: {containerId}\n")
-        
         return containerId
 
     def publishMediaContainer(self, userId, containerId):
@@ -59,7 +56,6 @@ class PostPublishingService:
         mediaId = response.json()["id"]
         params["creation_id"] = None
         print(f"Post published, media id: {mediaId}\n")
-
         return mediaId
     
     def getLongLivedAccessToken(self, accessToken):
