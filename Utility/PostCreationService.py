@@ -24,7 +24,7 @@ class PostCreationService(object):
     def createPost(self):
         previousPosts = self.retrievePreviousPosts()
         newPost = Post()
-        newPost.text = self.generateText()
+        newPost.text = self.generateText(previousPosts)
         newPost.mediaUrl = self.generateImage(newPost.text)
         newPost.fileName = self.createFileName()
         return newPost
@@ -64,14 +64,17 @@ class PostCreationService(object):
         previousPosts = []
         for _ in range(20):
             line = f.readline().rstrip("xx\n")
-            previousPosts.append(line)
+            if line:
+                previousPosts.append(line)
         return previousPosts
         
-    def generateText(self):
+    def generateText(self, previousPosts):
         #TODO(oore): Add better prompt engineering to generate quotes.
         print("Generating caption...")
+        previousPostsOnALine = " ".join(previousPosts)
         textCompletion = PostCreationService.client.chat.completions.create(
-            messages=[{"role": "user", "content": "Give me a short quote enough for an Instagram post; no hashtags, just a text."}],
+            messages=[{"role": "user", "content": f"Give me a short quote enough for an Instagram post; no hashtags, just a text.\
+                       This quote should be different from these quotes from previous posts:{previousPostsOnALine}"}],
             model="gpt-4o-mini", 
         ).to_dict()
         text = textCompletion["choices"][0]["message"]["content"]
@@ -113,4 +116,4 @@ if __name__ == "__main__":
     p = PostCreationService()
     newPost = p.createPost()
     p.savePost(newPost)
-    print(p.retrievePreviousPosts())
+    
