@@ -22,9 +22,9 @@ class PostCreationService(object):
         return cls.instance
 
     def createPost(self):
-        noRepeatList = self.retrieveMostPreviousPosts()
+        previousPosts = self.retrieveMostPreviousPosts()
         newPost = Post()
-        newPost.caption = self.generateCaption(noRepeatList)
+        newPost.caption = self.generateCaption(previousPosts)
         newPost.hashtags = self.generateHashtags(newPost.caption)
         newPost.mediaUrl = self.generateImage(newPost.caption)
         newPost.fileName = self.createFileName()
@@ -42,14 +42,14 @@ class PostCreationService(object):
         # change temporary url to firebase permanent url and store in database
         post.mediaUrl = blob.public_url
         blob.make_public()
-        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.text, "mediaUrl": post.mediaUrl})
+        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrl": post.mediaUrl})
         # update previous post cache 
-        p.updateMostPreviousPosts(post.caption)
+        self.updateMostPreviousPosts(post.caption)
         print(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
         return
     
     def updateMostPreviousPosts(self, text):
-        path = "../Cache/previousPosts.txt"
+        path = "./Cache/previousPosts.txt"
         f = open(path, "r+")
         _ = f.readline()
         data = f.read()
@@ -60,7 +60,7 @@ class PostCreationService(object):
         return
 
     def retrieveMostPreviousPosts(self):
-        path = "../Cache/previousPosts.txt"
+        path = "./Cache/previousPosts.txt"
         postCacheExists = os.path.isfile(path)
         if not postCacheExists:
             try:
@@ -102,7 +102,7 @@ class PostCreationService(object):
         ).to_dict()
         hashtags = hashtagCompletion["choices"][0]["message"]["content"]
         print(f"Hashtags: {hashtags}\n")
-        return hashtags
+        return f"#Motivation {hashtags}"
     
     def generateImage(self, text):
         print("Generating image...")
