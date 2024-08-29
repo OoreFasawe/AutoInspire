@@ -50,13 +50,14 @@ class PostCreationService(object):
     
     def updateMostPreviousPosts(self, text):
         path = "./Cache/previousPosts.txt"
-        f = open(path, "r+")
-        _ = f.readline()
-        data = f.read()
-        f.seek(0)
-        f.write(data)
-        f.truncate()
-        f.write(f"{text}\n")
+        with open(path, "r+") as f:
+            f = open(path, "r+")
+            _ = f.readline()
+            data = f.read()
+            f.seek(0)
+            f.write(data)
+            f.truncate()
+            f.write(f"{text}\n")
         return
 
     def retrieveMostPreviousPosts(self):
@@ -66,20 +67,19 @@ class PostCreationService(object):
             try:
                 # create new file
                 open(path, "x")
-                f = open(path, "a")
-                for _ in range(20):
-                    f.write("xx\n")
-                f.close()
+                with open(path, "a") as f:
+                    for _ in range(20):
+                        f.write("xx\n")
             except Exception as error:
                 print("file exists but for some reason was not found by system", error)
 
         # read file content
-        f = open(path, "r")
-        previousPosts = []
-        for _ in range(20):
-            line = f.readline().rstrip("xx\n")
-            if line:
-                previousPosts.append(line)
+        with open(path, "r") as f:
+            previousPosts = []
+            for _ in range(20):
+                line = f.readline().rstrip("xx\n")
+                if line:
+                    previousPosts.append(line)
         return previousPosts
         
     def generateCaption(self, noRepeatList):
@@ -107,7 +107,7 @@ class PostCreationService(object):
     def generateImage(self, text):
         print("Generating image...")
         #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
-        imgPrompt = f'Make a visual that depicts what is said in this text(no need to add text on the image): "{text}"'
+        imgPrompt = f'Make a visual that depicts what is said in this text(do not add any text on the image): "{text}"'
         imageCompletion = PostCreationService.client.images.generate(
             model="dall-e-3",
             prompt=imgPrompt,
