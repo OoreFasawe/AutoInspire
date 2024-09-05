@@ -10,3 +10,11 @@ class CarouselPost(Post):
         super.__init__(fileName, mediaUrl, caption, hashtags)
         self.numberOfPosts = 5
         self.postType = PostTypes.CAROUSEL
+
+    def publishPost(self, publishingService: PostPublishingService):
+        userData = publishingService.getUserDetails()
+        userId = userData["user_id"]
+        containerIds = publishingService.createMediaContainer(userId, self)
+        carouselId = publishingService.createCarouselContainer(userId, self, containerIds)
+        mediaId = publishingService.publishMediaContainer(userId, carouselId)
+        return mediaId
