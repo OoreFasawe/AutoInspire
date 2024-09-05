@@ -8,3 +8,9 @@ class Post:
 
     def __repr__(self):
         return str({"Text": self.text, "Media URLs" : self.mediaUrls})
+
+from enum import Enum
+class PostTypes(Enum):
+    IMAGE = 1
+    VIDEO = 2
+    CAROUSEL = 3
