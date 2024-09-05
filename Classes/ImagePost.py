@@ -14,7 +14,7 @@ class ImagePost(Post):
     def publishPost(self, publishingService: PostPublishingService):
         userData = publishingService.getUserDetails()
         userId = userData["user_id"]
-        containerId = publishingService.createMediaContainer(userId, self)
+        containerId = publishingService.createMediaContainer(userId, self)[0]
         mediaId = publishingService.publishMediaContainer(userId, containerId)
         return mediaId
         
