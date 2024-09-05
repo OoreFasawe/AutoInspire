@@ -43,6 +43,17 @@ class PostPublishingService:
         params["caption"] = None
         print(f"Media container created, container id: {containerId}\n")
         return containerId
+    
+    def createCarouselContainer(self, userId, post:Post, itemContainerIds):
+        print(f"Creating carousel container...")
+        params["access_token"] = Application.keys["instagram_app_user_access_token"]
+        params["media_type"] = "CAROUSEL"
+        params["children"] = itemContainerIds
+        params["caption"] = post.caption + "\n\n" + post.hashtags
+        response = requests.post(base_ig_url + f"{userId}/media", json=params)
+        carouselContainer = response.json()["id"]
+        print(f"Carousel container created, container id: {carouselContainer}\n")
+        return carouselContainer
 
     def publishMediaContainer(self, userId, containerId):
         print(f"Publishing post...")
