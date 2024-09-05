@@ -26,26 +26,27 @@ class PostCreationService(object):
         newPost = Post()
         newPost.caption = self.generateCaption(previousPosts)
         newPost.hashtags = self.generateHashtags(newPost.caption)
-        newPost.mediaUrl = self.generateImage(newPost.caption)
+        newPost.mediaUrls = self.generateImages(newPost.caption, 1)
         newPost.fileName = self.createFileName()
         return newPost
 
     def savePost(self, post: Post):
         # save to firebase storage
         print(f"Saving {post.fileName} to database...")
-        blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
-        imageData = requests.get(post.mediaUrl).content
-        blob.upload_from_string(
-            imageData,
-            content_type='image/jpg'
-        )
-        # change temporary url to firebase permanent url and store in database
-        post.mediaUrl = blob.public_url
-        blob.make_public()
-        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrl": post.mediaUrl})
+        for i, mediaUrl in enumerate(post.mediaUrls):
+            blob = PostCreationService.bucket.blob(f"{post.fileName}/{post.fileName}_{i}.jpg")
+            imageData = requests.get(mediaUrl).content
+            blob.upload_from_string(
+                imageData,
+                content_type='image/jpg'
+            )
+            # change temporary url to firebase permanent url and store in database
+            post.mediaUrls[i] = blob.public_url
+            blob.make_public()
+        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrls": post.mediaUrls})
         # update previous post cache 
         self.updateMostPreviousPosts(post.caption)
-        print(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
+        print(f"Saved {post.fileName} to database. Public urls: {post.mediaUrls}\n")
         return
     
     def updateMostPreviousPosts(self, text):
@@ -104,20 +105,29 @@ class PostCreationService(object):
         print(f"Hashtags: {hashtags}\n")
         return f"#Motivation {hashtags}"
     
-    def generateImage(self, text):
-        print("Generating image...")
-        #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
-        imgPrompt = f'Make a visual that depicts what is said in this text(do not add any text on the image): "{text}"'
-        imageCompletion = PostCreationService.client.images.generate(
-            model="dall-e-3",
-            prompt=imgPrompt,
-            size="1024x1024",
-            style="vivid",
-        ).to_dict()
-        mediaUrl = imageCompletion["data"][0]["url"]
-        print(f"Image url: {mediaUrl}\n")
-        return mediaUrl
-    
+    def generateImages(self, text, numberOfImages):
+        mediaUrls = []
+
+        def generateImage(text):
+            #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
+            imgPrompt = f'Make a visual that depicts what is said in this text(do not add any text on the image): "{text}"'
+            imageCompletion = PostCreationService.client.images.generate(
+                model="dall-e-3",
+                prompt=imgPrompt,
+                size="1024x1024",
+                style="vivid",
+                n = 1
+            ).to_dict()
+            mediaUrl = imageCompletion["data"][0]["url"]
+            return mediaUrl
+        
+        for i in range(numberOfImages):
+            print(f"Generating image #{i + 1}...")
+            mediaUrl = generateImage(text)
+            mediaUrls.append(mediaUrl)
+            print(f"Media URL: {mediaUrl}\n")
+        return mediaUrls
+
     def createFileName(self):
         print("Creating post file name...")
         postCollection = PostCreationService.db.collection("posts")
