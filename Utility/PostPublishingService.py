@@ -40,7 +40,7 @@ class PostPublishingService:
         print(f"Post hashtags:{post.hashtags}")
         params["access_token"] = Application.keys["instagram_app_user_access_token"]
         params["image_url"] = post.mediaUrl
-        params["caption"] = f"Quote of the day: {post.caption}\n\n{post.hashtags}"
+        params["caption"] = {post.caption} + "\n\n" + {post.hashtags}
         response = requests.post(base_ig_url + f"{userId}/media", params)
         containerId = response.json()["id"]
         params["image_url"] = None
