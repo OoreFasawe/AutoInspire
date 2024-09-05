@@ -4,3 +4,6 @@ class VideoPost(Post):
         super.__init__(fileName, mediaUrl, caption, hashtags)
         self.numberOfPosts = 1
         self.postType = PostTypes.VIDEO
+    
+    def publishPost():
+        pass

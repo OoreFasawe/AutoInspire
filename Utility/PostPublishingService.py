@@ -17,11 +17,7 @@ class PostPublishingService:
         return cls.instance 
 
     def publishPost(self, post:Post):
-        userData = self.getUserDetails()
-        userId = userData["user_id"]
-        containerId = self.createMediaContainer(userId, post)
-        mediaId = self.publishMediaContainer(userId, containerId)
-        return mediaId
+        post.publishPost()
     
     def getUserDetails(self):
         print("Getting user details...")
