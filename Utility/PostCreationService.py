@@ -1,16 +1,18 @@
 import sys
 import os
-ABS_PATH = '/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'
-sys.path.append(os.path.abspath(ABS_PATH))
 from openai import OpenAI 
 from Classes.Post import Post
 from Details import Application
 import firebase_admin
 from firebase_admin import firestore, credentials, storage
 import requests
+import logging
+import random
+
 class PostCreationService(object):
-    client = OpenAI(api_key=Application.keys["api_secret_key"])
-    cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot/firebaseServiceAccount.json'))
+    # Initialize openai, firebase database and firebase data storage clients.
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", 0))
+    cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Downloads/PersonalProjects/AutoInspire/Utility/firebaseServiceAccount.json'))
     firebase_admin.initialize_app(cred, {"storageBucket": "instagram-autobot-df35b.appspot.com"})
     db = firestore.client()
     bucket = storage.bucket()
@@ -22,7 +24,7 @@ class PostCreationService(object):
         return cls.instance
 
     def createPost(self):
-        previousPosts = self.retrieveMostPreviousPosts()
+        previousPosts = self.retrieveList("./Cache/previousPosts.txt")
         newPost = Post()
         newPost.caption = self.generateCaption(previousPosts)
         newPost.hashtags = self.generateHashtags(newPost.caption)
@@ -32,7 +34,7 @@ class PostCreationService(object):
 
     def savePost(self, post: Post):
         # save to firebase storage
-        print(f"Saving {post.fileName} to database...")
+        logging.info(f"Saving {post.fileName} to database...")
         blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
         imageData = requests.get(post.mediaUrl).content
         blob.upload_from_string(
@@ -45,7 +47,7 @@ class PostCreationService(object):
         PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrl": post.mediaUrl})
         # update previous post cache 
         self.updateMostPreviousPosts(post.caption)
-        print(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
+        logging.info(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
         return
     
     def updateMostPreviousPosts(self, text):
@@ -60,10 +62,9 @@ class PostCreationService(object):
             f.write(f"{text}\n")
         return
 
-    def retrieveMostPreviousPosts(self):
-        path = "./Cache/previousPosts.txt"
-        postCacheExists = os.path.isfile(path)
-        if not postCacheExists:
+    def retrieveList(self, path):
+        fileExists = os.path.isfile(path)
+        if not fileExists:
             try:
                 # create new file
                 open(path, "x")
@@ -71,43 +72,79 @@ class PostCreationService(object):
                     for _ in range(20):
                         f.write("xx\n")
             except Exception as error:
-                print("file exists but for some reason was not found by system", error)
+                logging.error("file exists but for some reason was not found by system", error)
 
         # read file content
         with open(path, "r") as f:
-            previousPosts = []
+            textList = []
             for _ in range(20):
                 line = f.readline().rstrip("xx\n")
                 if line:
-                    previousPosts.append(line)
-        return previousPosts
+                    textList.append(line)
+        return textList
         
     def generateCaption(self, noRepeatList):
-        #TODO(oore): Add better prompt engineering to generate quotes.
-        print("Generating caption...")
+        logging.info("Generating caption...")
+        motivationThemes = ["reward", "socialRecognition", "obligation", "fear", "socialStatus", "competition"]
+        randomTheme = random.choice(motivationThemes)
+        logging.debug("Theme: ", randomTheme)
+        prompts = self.retrieveList(f"./Utility/Prompts/{randomTheme}.txt")
+
+        if not prompts:
+            raise ValueError(f"Prompt list for theme '{randomTheme}' is empty. Check if the file exists and contains data.")
+        
+        randomPrompt = random.choice(prompts)
+        logging.debug(randomPrompt)
         noRepeatListOnALine = " ".join(noRepeatList)
+    
         textCompletion = PostCreationService.client.chat.completions.create(
-            messages=[{"role": "user", "content": f"Give me a short quote enough for an Instagram post; no hashtags, just a text.\
-                       This quote should be different from these quotes from previous posts:{noRepeatListOnALine}"}],
+            messages=[{"role": "user", "content": f"{randomPrompt}; no hashtags, just a text.\
+                       This quote should follow a different pattern structure, probability of weirdness than from these quotes from previous posts:{noRepeatListOnALine}"}],
             model="gpt-4o-mini", 
         ).to_dict()
         caption = textCompletion["choices"][0]["message"]["content"]
-        print(f"Caption: {caption}\n")
+        logging.info(f"Caption: {caption}\n")
         return caption
     
     def generateHashtags(self, text):
+        logging.info("Generating hashtags")
         hashtagCompletion = PostCreationService.client.chat.completions.create(
             model="gpt-4o-mini", 
-            messages=[{"role": "user", "content": f"Make five space-seperated relevant hashtags to this text on a single line):{text}."}],
+            messages=[{"role": "user", "content": f"Make ten space-seperated relevant hashtags to this text on a single line):{text}."}],
         ).to_dict()
         hashtags = hashtagCompletion["choices"][0]["message"]["content"]
-        print(f"Hashtags: {hashtags}\n")
+        logging.info(f"Hashtags: {hashtags}\n")
         return f"#Motivation {hashtags}"
     
     def generateImage(self, text):
-        print("Generating image...")
-        #TODO(oore): Explore better image genetation options. The texts on images being generated aren't accurate.
-        imgPrompt = f'Make a visual that depicts what is said in this text(do not add any text on the image): "{text}"'
+        logging.info("Generating image...")
+        # Define categories with possible values
+        art_styles = ["photorealistic", "cinematic", "digital painting", "anime-inspired", "surrealist"]
+        lighting_moods = ["warm golden hour", "moody and dramatic", "soft glow", "neon cyberpunk", "high contrast"]
+        composition_styles = ["close-up portrait", "wide-angle shot", "dynamic perspective", "bird’s eye view", "symmetrical composition"]
+        color_palettes = ["vibrant neon", "soft pastel", "earthy tones", "monochrome", "colorful gradients"]
+        art_mediums = ["oil painting", "watercolor", "cyberpunk digital art", "sketch drawing", "charcoal illustration"]
+        detail_levels = ["hyper-detailed", "minimalist", "abstract", "realistic with fine textures"]
+        backgrounds = ["futuristic cityscape", "lush nature", "abstract dream world", "historical setting", "space nebula"]
+        poses_emotions = ["powerful stance", "calm and serene", "determined expression", "energetic movement", "mysterious gaze"]
+
+        imgGenerationPrePrompt = (
+            f"Please generate an image generation prompt for the motivational caption '{text}'. Try not to be abstract with the description and the prompt should be structured in two parts: "
+            "first, a 'Main Theme' that clearly describes the main idea, emotion, and message of the caption, making it the primary focus of the image; do not put any text at all on the image "
+            "second, a 'Style Options' section that lists customizable artistic categories. "
+            f"For the style options, feel free appeal to any combination of the following: lighting mood = {random.choice(lighting_moods)}, "
+            f"composition = {random.choice(composition_styles)}, color palette = {random.choice(color_palettes)}, "
+            f"art medium = {random.choice(art_mediums)}, detail level = {random.choice(detail_levels)}, "
+            f"and pose/emotion = {random.choice(poses_emotions)}."
+        )
+
+        imageGenerationPrompt = PostCreationService.client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[{"role": "user", "content": imgGenerationPrePrompt}],
+        ).to_dict()
+        imgPrompt = imageGenerationPrompt["choices"][0]["message"]["content"]
+        logging.debug(f"\n{imgPrompt}\n")
+
         imageCompletion = PostCreationService.client.images.generate(
             model="dall-e-3",
             prompt=imgPrompt,
@@ -115,21 +152,22 @@ class PostCreationService(object):
             style="vivid",
         ).to_dict()
         mediaUrl = imageCompletion["data"][0]["url"]
-        print(f"Image url: {mediaUrl}\n")
+        logging.info(f"Image url: {mediaUrl}\n")
         return mediaUrl
     
     def createFileName(self):
-        print("Creating post file name...")
+        logging.info("Creating post file name...")
         postCollection = PostCreationService.db.collection("posts")
         # TODO(oore): Add count variable to database for faster lookup
         countQuery = postCollection.count()
         numberOfPosts = countQuery.get()[0][0].value
         fileName = f"Post#{int(numberOfPosts + 1)}"
-        print(f"File name: {fileName}\n")
+        logging.info(f"File name: {fileName}\n")
         return fileName
 
 # demo functionality
 if __name__ == "__main__":
     p = PostCreationService()
-    newPost = p.createPost()
-    p.savePost(newPost)
+    # previousPosts = p.retrieveList("./Cache/previousPosts.txt")
+    p.createPost()
+    # p.savePost(newPost)

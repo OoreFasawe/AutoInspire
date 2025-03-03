@@ -1,7 +1,7 @@
 import sys
 import os
-sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
-from Classes.Post import Post
+# sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
+from ..Classes.Post import Post
 from Details import Application
 import requests
 
