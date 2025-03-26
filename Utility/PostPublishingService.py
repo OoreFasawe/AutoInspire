@@ -1,15 +1,20 @@
-import sys
 import os
-# sys.path.append(os.path.abspath('/Users/ooreoluwafasawe/Desktop/Coding/Instagram-Autobot'))
-from ..Classes.Post import Post
-from Details import Application
+import logging
+from Classes.Post import Post
 import requests
 
 base_ig_url = "https://graph.instagram.com/"
 base_fb_url = "https://graph.facebook.com/"
 params = {}
 userData = {}
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s: %(message)s",
+    level=os.environ.get("LOG_LEVEL", "INFO"),
+)
+
 class PostPublishingService:
+    instagram_access_token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
     # Singleton design pattern in python.
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -17,63 +22,66 @@ class PostPublishingService:
         return cls.instance 
 
     def publishPost(self, post:Post):
+        logging.info("Starting Post Publishing Service")
         userData = self.getUserDetails()
+        if not userData:
+            logging.error("Error retriving user details.")
+            return None
         userId = userData["user_id"]
         containerId = self.createMediaContainer(userId, post)
         mediaId = self.publishMediaContainer(userId, containerId)
         return mediaId
     
     def getUserDetails(self):
-        print("Getting user details...")
-        params["access_token"] = Application.keys["instagram_app_user_access_token"]
-        params["fields"] = ["user_id,username,account_type,name"]
-        response = requests.get(base_ig_url + f"me", params)
+        logging.info("Getting Instagram user details...")
+        access_token = self.instagram_access_token
+        if not access_token:
+            logging.error("Instagram access token not found.")
+            return None
+        params = {
+            "access_token": access_token,
+            "fields": "user_id,username,account_type,name"
+        }
+        logging.debug(f"Instagram Access Token, last 5 chars: {access_token[-5:]}")
+        response = requests.get(base_ig_url + "me", params=params)
         userData = response.json()
-        params["fields"] = None
-        print(f"Username: {userData['username']}. User id: {userData['user_id']}\n")
+        if "error" in userData:
+            logging.error(f"Error fetching user details: {userData['error']}")
+            return None
+        logging.info(f"Username: {userData.get('username')}. User id: {userData.get('user_id')}\n")
         return userData
     
     def createMediaContainer(self, userId, post:Post):
-        print(f"Creating media container...")
-        print(f"Post media url: {post.mediaUrl}")
-        print(f"Post caption:{post.caption}")
-        print(f"Post hashtags:{post.hashtags}")
-        params["access_token"] = Application.keys["instagram_app_user_access_token"]
+        logging.info(f"Creating media container...")
+        logging.debug(f"Post media url: {post.mediaUrl}")
+        logging.debug(f"Post caption:{post.caption}")
+        logging.debug(f"Post hashtags:{post.hashtags}")
+        access_token = self.instagram_access_token
+        if not access_token:
+            logging.error("Instagram access token not found.")
+            return None
+        params["access_token"] = access_token
         params["image_url"] = post.mediaUrl
         params["caption"] = post.caption + "\n\n" + post.hashtags
         response = requests.post(base_ig_url + f"{userId}/media", params)
         containerId = response.json()["id"]
         params["image_url"] = None
         params["caption"] = None
-        print(f"Media container created, container id: {containerId}\n")
+        logging.info(f"Media container created, container id: {containerId}\n")
         return containerId
 
     def publishMediaContainer(self, userId, containerId):
-        print(f"Publishing post...")
-        params["access_token"] = Application.keys["facebook_page_user_access_token"]
+        logging.info(f"Publishing post...")
+        params["access_token"] = self.instagram_access_token
         params["creation_id"] = containerId
-        response = requests.post(base_fb_url + f"{userId}/media_publish", params)
+        response = requests.post(base_ig_url + f"{userId}/media_publish", params)
         mediaId = response.json()["id"]
         params["creation_id"] = None
-        print(f"Post published, media id: {mediaId}\n")
+        logging.info(f"Post published, media id: {mediaId}\n")
         return mediaId
-    
-    def getLongLivedAccessToken(self, accessToken):
-        url = base_fb_url + 'oauth/access_token'
-        param = dict()
-        param['grant_type'] = 'fb_exchange_token'
-        param['client_id'] = Application.loginInfo["developer_app_id"]
-        param['client_secret'] = Application.keys["developer_app_secret_key"]
-        param['fb_exchange_token'] = accessToken
-        response = requests.get(url = url,params=param)
-        long_lived_access_tokken =response.json()["access_token"]
-        print(long_lived_access_tokken)
-        return long_lived_access_tokken
     
 # demo functionality
 if __name__ == "__main__":
     p = PostPublishingService()
-    if not Application.keys["facebook_page_user_access_token"]:
-        shortLivedAccessToken = Application.keys["facebook_page_user_short_lived_access_token"]
-        p.getLongLivedAccessToken(shortLivedAccessToken)
-    p.publishPost(Post("https://storage.googleapis.com/instagram-autobot-df35b.appspot.com/Post%2310.jpg", "Test"))
+    p.getUserDetails()
+
