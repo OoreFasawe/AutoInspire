@@ -4,3 +4,4 @@ Details.py
 *.json
 *.DS_Store
 venv
+/Cache
