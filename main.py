@@ -1,5 +1,5 @@
-# from Utility.PostPublishingService import PostPublishingService
 from Utility.PostCreationService import PostCreationService
+from Utility.PostPublishingService import PostPublishingService
 import logging
 
 if __name__ == "__main__":
@@ -8,5 +8,5 @@ if __name__ == "__main__":
     pCreate = PostCreationService()
     newPost = pCreate.createPost()
     pCreate.savePost(newPost)
-    # pPublish = PostPublishingService()
-    # pPublish.publishPost(newPost)
+    pPublish = PostPublishingService()
+    pPublish.publishPost(newPost)
