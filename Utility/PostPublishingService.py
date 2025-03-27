@@ -25,7 +25,7 @@ class PostPublishingService:
         logging.info("Starting Post Publishing Service")
         userData = self.getUserDetails()
         if not userData:
-            logging.error("Error retriving user details.")
+            logging.error("Error retrieving user details.")
             return None
         userId = userData["user_id"]
         containerId = self.createMediaContainer(userId, post)
@@ -43,13 +43,20 @@ class PostPublishingService:
             "fields": "user_id,username,account_type,name"
         }
         logging.debug(f"Instagram Access Token, last 5 chars: {access_token[-5:]}")
-        response = requests.get(base_ig_url + "me", params=params)
-        userData = response.json()
-        if "error" in userData:
-            logging.error(f"Error fetching user details: {userData['error']}")
-            return None
-        logging.info(f"Username: {userData.get('username')}. User id: {userData.get('user_id')}\n")
-        return userData
+        try:
+            response = requests.get(base_ig_url + "me", params=params)
+            response.raise_for_status()  # Raises HTTPError if status is 4xx/5xx
+            userData = response.json()
+            logging.info(f"Username: {userData.get('username')}. User id: {userData.get('user_id')}\n")
+            return userData
+        except requests.exceptions.HTTPError as e:
+            logging.error(f"HTTP error: {e} - Response: {response.text}")
+        except ValueError:
+            logging.error(f"Failed to parse JSON from response: {response.text}")
+        except Exception as e:
+            logging.error(f"Unexpected error fetching user details: {e}")
+            
+        return dict()
     
     def createMediaContainer(self, userId, post:Post):
         logging.info(f"Creating media container...")
