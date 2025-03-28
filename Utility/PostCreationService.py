@@ -1,6 +1,8 @@
 import os
 from openai import OpenAI 
 from Classes.Post import Post
+from Classes.CarouselPost import CarouselPost
+from Classes.ImagePost import ImagePost
 import firebase_admin
 from firebase_admin import firestore, credentials, storage
 import requests
@@ -34,25 +36,26 @@ class PostCreationService(object):
             exit()
             
         previousPosts = self.retrieveList("./Cache/previousPosts.txt")
-        newPost = Post()
+        newPost = CarouselPost()
         newPost.caption = self.generateCaption(previousPosts)
         newPost.hashtags = self.generateHashtags(newPost.caption)
-        newPost.mediaUrl = self.generateImage(newPost.caption)
+        newPost.mediaUrl = self.generateImage(newPost.caption, newPost.numberOfPosts)
         newPost.fileName = self.createFileName()
         return newPost
 
     def savePost(self, post: Post):
         # save to firebase storage
         logging.info(f"Saving {post.fileName} to database...")
-        blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
-        imageData = requests.get(post.mediaUrl).content
-        blob.upload_from_string(
-            imageData,
-            content_type='image/jpg'
-        )
-        # change temporary url to firebase permanent url and store in database
-        post.mediaUrl = blob.public_url
-        blob.make_public()
+        for i, mediaUrl in enumerate(post.mediaUrl):
+            blob = PostCreationService.bucket.blob(f"{post.fileName}/{post.fileName}_{i+1}.jpg")
+            imageData = requests.get(mediaUrl).content
+            blob.upload_from_string(
+                imageData,
+                content_type='image/jpg'
+            )
+            # change temporary url to firebase permanent url and store in database
+            post.mediaUrl[i] = blob.public_url
+            blob.make_public()
         PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrl": post.mediaUrl})
         # update previous post cache 
         self.updateMostPreviousPosts(post.caption)
@@ -128,7 +131,7 @@ class PostCreationService(object):
         logging.info(f"Hashtags: {hashtags}\n")
         return f"#Motivation {hashtags}"
     
-    def generateImage(self, text):
+    def generateImage(self, text, numberOfPosts):
         logging.info("Generating image...")
         # Define categories with possible values
         art_styles = ["photorealistic", "cinematic", "digital painting", "anime-inspired", "surrealist"]
@@ -146,7 +149,7 @@ class PostCreationService(object):
             f"For the style options, feel free appeal to any combination of the following: lighting mood = {random.choice(lighting_moods)}, "
             f"composition = {random.choice(composition_styles)}, color palette = {random.choice(color_palettes)}, "
             f"art medium = {random.choice(art_mediums)}, detail level = {random.choice(detail_levels)}, "
-            f"and pose/emotion = {random.choice(poses_emotions)}."
+            f"and pose/emotion = {random.choice(poses_emotions)}.Prompt must be length 1000 characters or less to adhere to opEN AI API "
         )
 
         imageGenerationPrompt = PostCreationService.client.chat.completions.create(
@@ -154,30 +157,33 @@ class PostCreationService(object):
             messages=[{"role": "user", "content": imgGenerationPrePrompt}],
         ).to_dict()
         imgPrompt = imageGenerationPrompt["choices"][0]["message"]["content"]
+        print(imgPrompt)
         logging.debug(f"Image Generation prompt: \n{imgPrompt}\n")
 
 
 
-        input = {
-            "prompt": imgPrompt,
-            "prompt_upsampling": True
-        }
+        # input = {
+        #     "prompt": imgPrompt,
+        #     "prompt_upsampling": True
+        # }
 
-        output = replicate.run(
-            "black-forest-labs/flux-1.1-pro",
-            input=input
-        )
-        image_url = output[0] if isinstance(output, list) else output
+        # output = replicate.run(
+        #     "black-forest-labs/flux-1.1-pro",
+        #     input=input
+        # )
+        # image_url = output[0] if isinstance(output, list) else output
         # print(image_url)
-        # imageCompletion = PostCreationService.client.images.generate(
-        #     model="dall-e-3",
-        #     prompt=imgPrompt,
-        #     size="1024x1024",
-        #     style="vivid",
-        # ).to_dict()
-        mediaUrl = image_url #Completion["data"][0]["url"]
-        logging.info(f"Image url: {mediaUrl}\n")
-        return mediaUrl
+        imageCompletion = PostCreationService.client.images.generate(
+            model="dall-e-2",
+            prompt=imgPrompt,
+            size="1024x1024",
+            style="natural",
+            n = numberOfPosts
+        ).to_dict()
+        mediaUrls = [imageCompletion["data"][i]["url"] for i in range(len(imageCompletion["data"]))]
+        # mediaUrl = image_url #Completion["data"][0]["url"]
+        logging.info(f"Image urls: {mediaUrls}\n")
+        return mediaUrls
     
     def createFileName(self):
         logging.info("Creating post file name...")

@@ -1,6 +1,6 @@
 import os
 import logging
-from Classes.Post import Post
+from Classes.Post import Post, PostTypes
 import requests
 
 base_ig_url = "https://graph.instagram.com/"
@@ -23,14 +23,8 @@ class PostPublishingService:
 
     def publishPost(self, post:Post):
         logging.info("Starting Post Publishing Service")
-        userData = self.getUserDetails()
-        if not userData:
-            logging.error("Error retrieving user details.")
-            return None
-        userId = userData["user_id"]
-        containerId = self.createMediaContainer(userId, post)
-        mediaId = self.publishMediaContainer(userId, containerId)
-        return mediaId
+        post.publishPost(self)
+        return
     
     def getUserDetails(self):
         logging.info("Getting Instagram user details...")
@@ -68,14 +62,30 @@ class PostPublishingService:
             logging.error("Instagram access token not found.")
             return None
         params["access_token"] = access_token
-        params["image_url"] = post.mediaUrl
-        params["caption"] = post.caption + "\n\n" + post.hashtags
-        response = requests.post(base_ig_url + f"{userId}/media", params)
-        containerId = response.json()["id"]
+        params["is_carousel"] = post.postType == PostTypes.CAROUSEL
+        params["caption"] = (post.caption + "\n\n" + post.hashtags) if post.postType != PostTypes.CAROUSEL else None
+        containers = []
+        for mediaUrl in post.mediaUrl:
+            params["image_url"] = mediaUrl
+            response = requests.post(base_ig_url + f"{userId}/media", params)
+            print(response.json())
+            itemContainer = response.json()["id"]
+            containers.append(itemContainer)
         params["image_url"] = None
         params["caption"] = None
-        logging.info(f"Media container created, container id: {containerId}\n")
-        return containerId
+        logging.info(f"Media containers created, container id: {containers}\n")
+        return containers
+    
+    def createCarouselContainer(self, userId, post:Post, itemContainerIds):
+        print(f"Creating carousel container...")
+        params["access_token"] = self.instagram_access_token
+        params["media_type"] = "CAROUSEL"
+        params["children"] = itemContainerIds
+        params["caption"] = post.caption + "\n\n" + post.hashtags
+        response = requests.post(base_ig_url + f"{userId}/media", json=params)
+        carouselContainer = response.json()["id"]
+        print(f"Carousel container created, container id: {carouselContainer}\n")
+        return carouselContainer
 
     def publishMediaContainer(self, userId, containerId):
         logging.info(f"Publishing post...")
