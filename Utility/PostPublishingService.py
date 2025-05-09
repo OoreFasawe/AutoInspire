@@ -30,6 +30,11 @@ class PostPublishingService:
         userId = userData["user_id"]
         containerId = self.createMediaContainer(userId, post)
         mediaId = self.publishMediaContainer(userId, containerId)
+        logging.info(f"\nFile name: {post.fileName}")
+        logging.info(f"\nPost caption: {post.caption}")
+        logging.info(f"\nPost media URL: {post.mediaUrl}")
+        logging.info(f"\nPost hashtags: {post.hashtags}")
+
         return mediaId
     
     def getUserDetails(self):
@@ -84,7 +89,7 @@ class PostPublishingService:
         response = requests.post(base_ig_url + f"{userId}/media_publish", params)
         mediaId = response.json()["id"]
         params["creation_id"] = None
-        logging.info(f"Post published, media id: {mediaId}\n")
+        logging.info(f"Post published.\nMedia id: {mediaId}")
         return mediaId
     
 # demo functionality

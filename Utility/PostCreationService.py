@@ -16,7 +16,7 @@ logging.basicConfig(
 class PostCreationService(object):
     # Initialize openai, firebase database and firebase data storage clients.
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", 0))
-    cred = credentials.Certificate(os.path.abspath('/Users/ooreoluwafasawe/Downloads/PersonalProjects/AutoInspire/Utility/firebaseServiceAccount.json'))
+    cred = credentials.Certificate("./Utility/firebaseServiceAccount.json")
     firebase_admin.initialize_app(cred, {"storageBucket": "instagram-autobot-df35b.appspot.com"})
     db = firestore.client()
     bucket = storage.bucket()
@@ -42,21 +42,54 @@ class PostCreationService(object):
         return newPost
 
     def savePost(self, post: Post):
-        # save to firebase storage
-        logging.info(f"Saving {post.fileName} to database...")
-        blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
-        imageData = requests.get(post.mediaUrl).content
-        blob.upload_from_string(
-            imageData,
-            content_type='image/jpg'
-        )
-        # change temporary url to firebase permanent url and store in database
-        post.mediaUrl = blob.public_url
-        blob.make_public()
-        PostCreationService.db.collection("posts").add(document_id=post.fileName, document_data={"document" "text": post.caption, "hashtags": post.hashtags, "mediaUrl": post.mediaUrl})
-        # update previous post cache 
-        self.updateMostPreviousPosts(post.caption)
-        logging.info(f"Saved {post.fileName} to database. Public url: {post.mediaUrl}\n")
+        logging.info(f"Attempting to save {post.fileName} to database...")
+
+        try:
+            # Fetch image data
+            logging.info(f"Downloading media from {post.mediaUrl}")
+            imageData = requests.get(post.mediaUrl).content
+        except Exception as e:
+            logging.error(f"Failed to download image from {post.mediaUrl}: {e}")
+            return
+
+        try:
+            # Upload image to Firebase Storage
+            blob = PostCreationService.bucket.blob(f"{post.fileName}.jpg")
+            blob.upload_from_string(
+                imageData,
+                content_type='image/jpg'
+            )
+            blob.make_public()
+            post.mediaUrl = blob.public_url
+            logging.info(f"Uploaded image. Public URL: {post.mediaUrl}")
+        except Exception as e:
+            logging.error(f"Failed to upload {post.fileName} to Firebase Storage: {e}")
+            return
+
+        try:
+            # Save post metadata to Firebase Database
+            PostCreationService.db.collection("posts").add(
+                document_id=post.fileName,
+                document_data={
+                    "document": {
+                        "text": post.caption,
+                        "hashtags": post.hashtags,
+                        "mediaUrl": post.mediaUrl
+                    }
+                }
+            )
+            logging.info(f"Post metadata saved for {post.fileName}")
+        except Exception as e:
+            logging.error(f"Failed to save metadata to Firestore for {post.fileName}: {e}")
+            return
+
+        try:
+            self.updateMostPreviousPosts(post.caption)
+            logging.info(f"Updated recent posts cache for {post.fileName}")
+        except Exception as e:
+            logging.warning(f"Post saved, but failed to update recent posts cache: {e}")
+
+        logging.info(f"Successfully saved {post.fileName} to database.")
         return
     
     def updateMostPreviousPosts(self, text):

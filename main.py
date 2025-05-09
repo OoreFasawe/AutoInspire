@@ -10,3 +10,4 @@ if __name__ == "__main__":
     pCreate.savePost(newPost)
     pPublish = PostPublishingService()
     pPublish.publishPost(newPost)
+    logging.info("Shutting down AutoSpire")
